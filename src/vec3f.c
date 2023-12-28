@@ -1,5 +1,4 @@
 #include "math.h"
-
 #include "vec3f.h"
 
 v3f v3f_add(v3f v, v3f u)
