@@ -1,8 +1,10 @@
+#include "stdbool.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "defs.h"
 #include "vec3f.h"
 #include "ray.h"
+#include "math.h"
 
 void save_as_ppm(
     const char* filename,
@@ -35,8 +37,31 @@ void save_as_ppm(
     fprintf_s(stderr, "\rSaving PPM file... DONE\n");
 }
 
+f32 hit_sphere(p3f center, f32 radius, ray* r)
+{
+    v3f oc = v3f_sub(r->origin, center);
+    f32 a = v3f_dot(r->dir, r->dir);
+    f32 b = 2.f * v3f_dot(oc, r->dir);
+    f32 c = v3f_dot(oc, oc) - radius * radius;
+    f32 discriminant = b * b - 4.f * a * c;
+
+    if (discriminant < 0)
+    {
+        return -1.f;
+    }
+    return (-b - sqrtf(discriminant)) / (2.f * a);
+}
+
 c3f ray_color(ray* r)
 {
+    const p3f sphere_center = { .x = 0.f, .y = 0.f, .z = -1.f };
+    const f32 t = hit_sphere(sphere_center , 0.5f, r);
+    if (t > 0.f)
+    {
+        const v3f n = v3f_unit(v3f_sub(ray_at(r, t), sphere_center));
+        return v3f_mul((c3f) { .r = n.x + 1.f, .g = n.y + 1.f, .b = n.z + 1.f }, 0.5f);
+    }
+
     const v3f unit_direction = v3f_unit(r->dir);
     const f32 a = 0.5f * (unit_direction.y + 1.f);
 
@@ -91,7 +116,7 @@ int main(void)
                     v3f_mul(pixel_delta_v, (f32)row)
                 ));
             const v3f ray_direction = v3f_sub(pixel_center, camera_center);
-            ray r = { .origin = pixel_center, .dir = ray_direction };
+            ray r = { .origin = camera_center, .dir = ray_direction };
             framebuffer[row * image_width + col] = ray_color(&r);
         }
     }
