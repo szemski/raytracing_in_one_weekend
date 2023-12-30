@@ -1,10 +1,10 @@
-#include "stdbool.h"
 #include "stdlib.h"
 #include "stdio.h"
 #include "defs.h"
 #include "vec3f.h"
 #include "ray.h"
 #include "math.h"
+
 
 void save_as_ppm(
     const char* filename,
@@ -37,28 +37,32 @@ void save_as_ppm(
     fprintf_s(stderr, "\rSaving PPM file... DONE\n");
 }
 
-f32 hit_sphere(p3f center, f32 radius, ray* r)
+bool raytest(hittable_array_list* list, ray* r, f32 t_min, f32 t_max, hit_record* rec)
 {
-    v3f oc = v3f_sub(r->origin, center);
-    f32 a = v3f_dot(r->dir, r->dir);
-    f32 b = 2.f * v3f_dot(oc, r->dir);
-    f32 c = v3f_dot(oc, oc) - radius * radius;
-    f32 discriminant = b * b - 4.f * a * c;
+    hit_record tmp_rec;
+    bool hit_anything = false;
+    f32 closest_t = t_max;
 
-    if (discriminant < 0)
+    for (int i = 0; i < (int)list->size; ++i)
     {
-        return -1.f;
+        hittable* obj = &list->data[i];
+        if (ray_hit(r, t_min, closest_t, obj, &tmp_rec))
+        {
+            hit_anything = true;
+            closest_t = tmp_rec.t;
+            *rec = tmp_rec;
+        }
     }
-    return (-b - sqrtf(discriminant)) / (2.f * a);
+
+    return hit_anything;
 }
 
-c3f ray_color(ray* r)
+c3f ray_color(ray* r, hittable_array_list* world)
 {
-    const p3f sphere_center = { .x = 0.f, .y = 0.f, .z = -1.f };
-    const f32 t = hit_sphere(sphere_center , 0.5f, r);
-    if (t > 0.f)
+    hit_record rec;
+    if (raytest(world, r, 0, INFINITY, &rec))
     {
-        const v3f n = v3f_unit(v3f_sub(ray_at(r, t), sphere_center));
+        const v3f n = rec.normal;
         return v3f_mul((c3f) { .r = n.x + 1.f, .g = n.y + 1.f, .b = n.z + 1.f }, 0.5f);
     }
 
@@ -73,7 +77,7 @@ c3f ray_color(ray* r)
 int main(void)
 {
     const f32 aspect_ration = 16.f / 9.f;
-    const int image_width = 800;
+    const int image_width = 1200;
     const int image_height = max((int)(image_width / aspect_ration), 1);
 
     const f32 focal_point = 1.f;
@@ -104,6 +108,19 @@ int main(void)
     c3f* framebuffer = (c3f*)malloc(image_width * image_height * sizeof(c3f));
     if (!framebuffer) exit(1);
 
+    hittable_array_list world;
+    hittable_array_list_init(&world);
+
+    hittable_array_list_add(&world, (hittable) {
+        .type = EHittableType_SPHERE,
+        .s = (sphere){ .center = {.x = 0, .y = 0, .z = -1}, .radius = 0.5f }
+    });
+    hittable_array_list_add(&world, (hittable) {
+        .type = EHittableType_SPHERE,
+        .s = (sphere){ .center = {.x = 0, .y = -100.5f, .z = -1}, .radius = 100.f }
+    });
+
+
     for (int row = 0; row < image_height; ++row)
     {
         fprintf_s(stderr, "\rScanline progress... %3d%%", (row * 100) / image_height);
@@ -117,7 +134,7 @@ int main(void)
                 ));
             const v3f ray_direction = v3f_sub(pixel_center, camera_center);
             ray r = { .origin = camera_center, .dir = ray_direction };
-            framebuffer[row * image_width + col] = ray_color(&r);
+            framebuffer[row * image_width + col] = ray_color(&r, &world);
         }
     }
     fprintf_s(stderr, "\rScanline progress... DONE\n");
