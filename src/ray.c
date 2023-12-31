@@ -4,13 +4,15 @@
 // Utils
 void set_face_normal(hit_record* rec, ray* r, v3f outward_normal);
 
+const interval interval_universe = { .v_min = -INFINITY, .v_max = INFINITY };
+const interval interval_empty = { .v_min = INFINITY, .v_max = -INFINITY };
 
 v3f ray_at(ray* r, f32 t)
 {
     return v3f_add(r->origin, v3f_mul(r->dir, t));
 }
 
-bool ray_hit(ray* r, f32 t_min, f32 t_max, hittable* obj, hit_record* rec)
+bool ray_hit(ray* r, interval t_interval, hittable* obj, hit_record* rec)
 {
     switch (obj->type)
     {
@@ -27,10 +29,10 @@ bool ray_hit(ray* r, f32 t_min, f32 t_max, hittable* obj, hit_record* rec)
 
         const f32 sqrtd = sqrtf(discriminant);
         f32 root = (-half_b - sqrtd) / a;
-        if (root <= t_min || root >= t_max)
+        if (!interval_surrounds(t_interval, root))
         {
             root = (-half_b + sqrtd) / a;
-            if (root <= t_min || root >= t_max) return false;
+            if (!interval_surrounds(t_interval, root)) return false;
         }
 
         rec->p = ray_at(r, root);

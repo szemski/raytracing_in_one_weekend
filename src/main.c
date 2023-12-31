@@ -37,16 +37,17 @@ void save_as_ppm(
     fprintf_s(stderr, "\rSaving PPM file... DONE\n");
 }
 
-bool raytest(hittable_array_list* list, ray* r, f32 t_min, f32 t_max, hit_record* rec)
+bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec)
 {
     hit_record tmp_rec;
     bool hit_anything = false;
-    f32 closest_t = t_max;
+    f32 closest_t = t_interval.v_max;
 
     for (int i = 0; i < (int)list->size; ++i)
     {
-        hittable* obj = &list->data[i];
-        if (ray_hit(r, t_min, closest_t, obj, &tmp_rec))
+        const hittable* obj = &list->data[i];
+        const interval new_interval = { .v_min = t_interval.v_min, .v_max = closest_t };
+        if (ray_hit(r, new_interval, obj, & tmp_rec))
         {
             hit_anything = true;
             closest_t = tmp_rec.t;
@@ -60,7 +61,8 @@ bool raytest(hittable_array_list* list, ray* r, f32 t_min, f32 t_max, hit_record
 c3f ray_color(ray* r, hittable_array_list* world)
 {
     hit_record rec;
-    if (raytest(world, r, 0, INFINITY, &rec))
+    const interval t_interval = { .v_min = 0, .v_max = INFINITY };
+    if (raytest(world, r, t_interval, &rec))
     {
         const v3f n = rec.normal;
         return v3f_mul((c3f) { .r = n.x + 1.f, .g = n.y + 1.f, .b = n.z + 1.f }, 0.5f);
