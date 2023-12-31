@@ -9,6 +9,9 @@
 // Utils
 bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec);
 c3f  ray_color(ray* r, hittable_array_list* world);
+c3f  clamp_color(c3f color);
+ray  get_ray(camera* cam, int i, int j);
+p3f  pixel_sample_square(camera* cam);
 
 
 void camera_initialize(camera* cam)
@@ -56,15 +59,14 @@ void camera_render(camera* cam, hittable_array_list* world)
         fprintf_s(stderr, "\rScanline progress... %3d%%", (row * 100) / cam->image_height);
         for (int col = 0; col < cam->image_width; ++col)
         {
-            const v3f pixel_center = v3f_add(
-                cam->pixel00_loc,
-                v3f_add(
-                    v3f_mul(cam->pixel_delta_u, (f32)col),
-                    v3f_mul(cam->pixel_delta_v, (f32)row)
-                ));
-            const v3f ray_direction = v3f_sub(pixel_center, cam->center);
-            ray r = { .origin = cam->center, .dir = ray_direction };
-            cam->framebuffer[row * cam->image_width + col] = ray_color(&r, world);
+            c3f color = { .r = 0, .g = 0, .b = 0 };
+            for (int sample = 0; sample < cam->samples_per_px; ++sample)
+            {
+                ray r = get_ray(cam, col, row);
+                color = v3f_add(color, ray_color(&r, world));
+            }
+            cam->framebuffer[row * cam->image_width + col]
+                = clamp_color(v3f_div(color, (f32)cam->samples_per_px));
         }
     }
     fprintf_s(stderr, "\rScanline progress... DONE\n");
@@ -107,5 +109,36 @@ c3f ray_color(ray* r, hittable_array_list* world)
     const c3f c1 = v3f_mul((c3f) { .r = 1.f, .g = 1.f, .b = 1.f }, 1.f - a);
     const c3f c2 = v3f_mul((c3f) { .r = 0.5f, .g = 0.7f, .b = 1.f }, a);
     return v3f_add(c1, c2);
+}
+
+c3f clamp_color(c3f color)
+{
+    return (c3f) {
+        .r = clamp(color.r, 0.f, 0.999f),
+        .g = clamp(color.g, 0.f, 0.999f),
+        .b = clamp(color.b, 0.f, 0.999f)
+    };
+}
+
+ray get_ray(camera* cam, int col, int row)
+{
+    const v3f pixel_center = v3f_add(
+        cam->pixel00_loc,
+        v3f_add(
+            v3f_mul(cam->pixel_delta_u, (f32)col),
+            v3f_mul(cam->pixel_delta_v, (f32)row)));
+    const v3f pixel_sample = v3f_add(pixel_center, pixel_sample_square(cam));
+    const v3f ray_direction = v3f_sub(pixel_sample, cam->center);
+    return (ray) { .origin = cam->center, .dir = ray_direction };
+}
+
+p3f pixel_sample_square(camera* cam)
+{
+    f32 px = -0.5f + rand01();
+    f32 py = -0.5f + rand01();
+
+    return v3f_add(
+        v3f_mul(cam->pixel_delta_u, px),
+        v3f_mul(cam->pixel_delta_v, py));
 }
 
