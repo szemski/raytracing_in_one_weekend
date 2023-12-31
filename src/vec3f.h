@@ -44,3 +44,8 @@ f32 v3f_length(v3f v);
 f32 v3f_length_squared(v3f v);
 f32 v3f_dot(v3f v, v3f u);
 
+v3f v3f_rand01();
+v3f v3f_rand_range(f32 v_min, f32 v_max);
+v3f v3f_random_in_unit_sphere();
+v3f v3f_random_unit_vector();
+v3f v3f_random_on_hemisphere(v3f normal);

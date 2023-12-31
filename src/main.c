@@ -29,7 +29,8 @@ int main(void)
     camera cam = {
         .aspect_ration = 16.f / 9.f,
         .image_width = 800,
-        .samples_per_px = 25
+        .samples_per_px = 100,
+        .max_depth = 50
     };
     camera_initialize(&cam);
     camera_render(&cam, &world);

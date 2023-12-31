@@ -8,7 +8,7 @@
 
 // Utils
 bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec);
-c3f  ray_color(ray* r, hittable_array_list* world);
+c3f  ray_color(ray* r, int depth, hittable_array_list* world);
 c3f  clamp_color(c3f color);
 ray  get_ray(camera* cam, int i, int j);
 p3f  pixel_sample_square(camera* cam);
@@ -63,7 +63,7 @@ void camera_render(camera* cam, hittable_array_list* world)
             for (int sample = 0; sample < cam->samples_per_px; ++sample)
             {
                 ray r = get_ray(cam, col, row);
-                color = v3f_add(color, ray_color(&r, world));
+                color = v3f_add(color, ray_color(&r, cam->max_depth, world));
             }
             cam->framebuffer[row * cam->image_width + col]
                 = clamp_color(v3f_div(color, (f32)cam->samples_per_px));
@@ -93,14 +93,17 @@ bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record*
     return hit_anything;
 }
 
-c3f ray_color(ray* r, hittable_array_list* world)
+c3f ray_color(ray* r, int depth, hittable_array_list* world)
 {
+    if (depth <= 0) return (c3f) { .r = 0, .g = 0, .b = 0 };
+
     hit_record rec;
-    const interval t_interval = { .v_min = 0, .v_max = INFINITY };
+    const interval t_interval = { .v_min = 0.001f, .v_max = INFINITY };
     if (raytest(world, r, t_interval, &rec))
     {
-        const v3f n = rec.normal;
-        return v3f_mul((c3f) { .r = n.x + 1.f, .g = n.y + 1.f, .b = n.z + 1.f }, 0.5f);
+        const v3f dir = v3f_random_on_hemisphere(rec.normal);
+        ray bounced_r = { .origin = rec.p, .dir = dir };
+        return v3f_mul(ray_color(&bounced_r, depth - 1, world), 0.5f);
     }
 
     const v3f unit_direction = v3f_unit(r->dir);
