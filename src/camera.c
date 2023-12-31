@@ -101,7 +101,7 @@ c3f ray_color(ray* r, int depth, hittable_array_list* world)
     const interval t_interval = { .v_min = 0.001f, .v_max = INFINITY };
     if (raytest(world, r, t_interval, &rec))
     {
-        const v3f dir = v3f_random_on_hemisphere(rec.normal);
+        const v3f dir = v3f_add(rec.normal, v3f_random_unit_vector());
         ray bounced_r = { .origin = rec.p, .dir = dir };
         return v3f_mul(ray_color(&bounced_r, depth - 1, world), 0.5f);
     }
