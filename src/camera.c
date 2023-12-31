@@ -12,6 +12,7 @@ c3f  ray_color(ray* r, int depth, hittable_array_list* world);
 c3f  clamp_color(c3f color);
 ray  get_ray(camera* cam, int i, int j);
 p3f  pixel_sample_square(camera* cam);
+c3f  linear_to_gamma(c3f color);
 
 
 void camera_initialize(camera* cam)
@@ -66,7 +67,7 @@ void camera_render(camera* cam, hittable_array_list* world)
                 color = v3f_add(color, ray_color(&r, cam->max_depth, world));
             }
             cam->framebuffer[row * cam->image_width + col]
-                = clamp_color(v3f_div(color, (f32)cam->samples_per_px));
+                = clamp_color(linear_to_gamma(v3f_div(color, (f32)cam->samples_per_px)));
         }
     }
     fprintf_s(stderr, "\rScanline progress... DONE\n");
@@ -143,5 +144,14 @@ p3f pixel_sample_square(camera* cam)
     return v3f_add(
         v3f_mul(cam->pixel_delta_u, px),
         v3f_mul(cam->pixel_delta_v, py));
+}
+
+c3f linear_to_gamma(c3f color)
+{
+    return (c3f) {
+        .r = sqrtf(color.r),
+        .g = sqrtf(color.g),
+        .b = sqrtf(color.b)
+    };
 }
 
