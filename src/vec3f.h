@@ -36,9 +36,11 @@ v3f v3f_add(v3f v, v3f u);
 v3f v3f_sub(v3f v, v3f u);
 v3f v3f_mul(v3f v, f32 s);
 v3f v3f_div(v3f v, f32 s);
+v3f v3f_mul_comp(v3f v, v3f u);
 v3f v3f_opposite(v3f v);
 v3f v3f_cross(v3f v, v3f u);
 v3f v3f_unit(v3f v);
+v3f v3f_reflect(v3f v, v3f n);
 
 f32 v3f_length(v3f v);
 f32 v3f_length_squared(v3f v);
@@ -49,3 +51,5 @@ v3f v3f_rand_range(f32 v_min, f32 v_max);
 v3f v3f_random_in_unit_sphere();
 v3f v3f_random_unit_vector();
 v3f v3f_random_on_hemisphere(v3f normal);
+
+bool v3f_near_zero(v3f v);

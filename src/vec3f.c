@@ -37,6 +37,15 @@ v3f v3f_div(v3f v, f32 s)
     };
 }
 
+v3f v3f_mul_comp(v3f v, v3f u)
+{
+    return (v3f) {
+        .x = v.x * u.x,
+        .y = v.y * u.y,
+        .z = v.z * u.z
+    };
+}
+
 v3f v3f_opposite(v3f v)
 {
     return (v3f) {
@@ -58,6 +67,11 @@ v3f v3f_cross(v3f v, v3f u)
 v3f v3f_unit(v3f v)
 {
     return v3f_div(v, v3f_length(v));
+}
+
+v3f v3f_reflect(v3f v, v3f n)
+{
+    return v3f_sub(v, v3f_mul(n, 2.f * v3f_dot(v, n)));
 }
 
 f32 v3f_length(v3f v)
@@ -112,4 +126,10 @@ v3f v3f_random_on_hemisphere(v3f normal)
     v3f v = v3f_random_unit_vector();
     if (v3f_dot(v, normal) > 0.f) return v;
     return v3f_opposite(v);
+}
+
+bool v3f_near_zero(v3f v)
+{
+    const f32 s = 1e-8f;
+    return fabs(v.x) < s && fabs(v.y) < s && fabs(v.z) < s;
 }

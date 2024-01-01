@@ -102,9 +102,13 @@ c3f ray_color(ray* r, int depth, hittable_array_list* world)
     const interval t_interval = { .v_min = 0.001f, .v_max = INFINITY };
     if (raytest(world, r, t_interval, &rec))
     {
-        const v3f dir = v3f_add(rec.normal, v3f_random_unit_vector());
-        ray bounced_r = { .origin = rec.p, .dir = dir };
-        return v3f_mul(ray_color(&bounced_r, depth - 1, world), 0.5f);
+        ray scattered;
+        c3f attenuation;
+        if (material_scatter(rec.mat, r, &rec, &attenuation, &scattered))
+        {
+            return v3f_mul_comp(attenuation, ray_color(&scattered, depth - 1, world));
+        }
+        return (c3f) { .r = 0, .g = 0, .b = 0 };
     }
 
     const v3f unit_direction = v3f_unit(r->dir);

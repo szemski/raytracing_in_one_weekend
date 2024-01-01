@@ -4,6 +4,8 @@
 #include "vec3f.h"
 #include "camera.h"
 #include "hittable.h"
+#include "material.h"
+
 
 void save_as_ppm(
     const char* filename,
@@ -13,16 +15,57 @@ void save_as_ppm(
 
 int main(void)
 {
+    material material_ground = {
+        .type = EMaterialType_LAMBERTIAN,
+        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.0f}
+    };
+    material material_center = {
+        .type = EMaterialType_LAMBERTIAN,
+        .albedo = {.r = 0.7f, .g = 0.3f, .b = 0.3f}
+    };
+    material material_left = {
+        .type = EMaterialType_METAL,
+        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.8f}
+    };
+    material material_right = {
+        .type = EMaterialType_METAL,
+        .albedo = {.r = 0.8f, .g = 0.6f, .b = 0.2f}
+    };
+
     hittable_array_list world;
     hittable_array_list_init(&world);
 
     hittable_array_list_add(&world, (hittable) {
         .type = EHittableType_SPHERE,
-        .s = (sphere){ .center = {.x = 0, .y = 0, .z = -1}, .radius = 0.5f }
+        .s = (sphere){
+            .center = {.x = 0, .y = 0, .z = -1},
+            .radius = 0.5f,
+            .mat = material_center
+        }
     });
     hittable_array_list_add(&world, (hittable) {
         .type = EHittableType_SPHERE,
-        .s = (sphere){ .center = {.x = 0, .y = -100.5f, .z = -1}, .radius = 100.f }
+        .s = (sphere){
+            .center = {.x = -1, .y = 0, .z = -1},
+            .radius = 0.5f,
+            .mat = material_left
+        }
+    });
+    hittable_array_list_add(&world, (hittable) {
+        .type = EHittableType_SPHERE,
+        .s = (sphere){
+            .center = {.x = 1, .y = 0, .z = -1},
+            .radius = 0.5f,
+            .mat = material_right
+        }
+    });
+    hittable_array_list_add(&world, (hittable) {
+        .type = EHittableType_SPHERE,
+        .s = (sphere){
+            .center = {.x = 0, .y = -100.5f, .z = -1},
+            .radius = 100.f,
+            .mat = material_ground
+        }
     });
 
 

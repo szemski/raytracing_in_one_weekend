@@ -39,6 +39,7 @@ bool ray_hit(ray* r, interval t_interval, hittable* obj, hit_record* rec)
         rec->t = root;
         const v3f outward_normal = v3f_div(v3f_sub(rec->p, s->center), s->radius);
         set_face_normal(rec, r, outward_normal);
+        rec->mat = &s->mat;
         return true;
     }
     default: return false;

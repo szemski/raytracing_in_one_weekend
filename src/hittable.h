@@ -3,6 +3,7 @@
 #include "stddef.h"
 #include "defs.h"
 #include "vec3f.h"
+#include "material.h"
 
 typedef struct hit_record hit_record;
 struct hit_record
@@ -11,6 +12,7 @@ struct hit_record
     v3f normal;
     f32 t;
     bool front_face;
+    material* mat;
 };
 
 typedef struct sphere sphere;
@@ -18,6 +20,7 @@ struct sphere
 {
     p3f center;
     f32 radius;
+    material mat;
 };
 
 typedef enum EHittableType EHittableType;
