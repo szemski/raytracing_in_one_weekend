@@ -7,12 +7,12 @@
 #include "ray.h"
 
 // Utils
-bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec);
-c3f  ray_color(ray* r, int depth, hittable_array_list* world);
-c3f  clamp_color(c3f color);
-ray  get_ray(camera* cam, int i, int j);
-p3f  pixel_sample_square(camera* cam);
-c3f  linear_to_gamma(c3f color);
+static bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec);
+static c3f  ray_color(ray* r, int depth, hittable_array_list* world);
+static c3f  clamp_color(c3f color);
+static ray  get_ray(camera* cam, int i, int j);
+static p3f  pixel_sample_square(camera* cam);
+static c3f  linear_to_gamma(c3f color);
 
 
 void camera_initialize(camera* cam)
@@ -158,4 +158,3 @@ c3f linear_to_gamma(c3f color)
         .b = sqrtf(color.b)
     };
 }
-

@@ -17,21 +17,23 @@ int main(void)
 {
     material material_ground = {
         .type = EMaterialType_LAMBERTIAN,
-        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.0f}
+        .lambertian = {.albedo = {.r = 0.8f, .g = 0.8f, .b = 0.0f}}
     };
+
     material material_center = {
         .type = EMaterialType_LAMBERTIAN,
-        .albedo = {.r = 0.7f, .g = 0.3f, .b = 0.3f}
+        .lambertian = {.albedo = {.r = 0.1f, .g = 0.2f, .b = 0.5f}}
     };
     material material_left = {
-        .type = EMaterialType_METAL,
-        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.8f},
-        .fuzz = 0.1f
+        .type = EMaterialType_DIELECTRIC,
+        .dielectric = {.ir = 1.5}
     };
     material material_right = {
         .type = EMaterialType_METAL,
-        .albedo = {.r = 0.8f, .g = 0.6f, .b = 0.2f},
-        .fuzz = .5f
+        .metal = {
+            .albedo = {.r = 0.8f, .g = 0.6f, .b = 0.2f},
+            .fuzz = .0f
+        }
     };
 
     hittable_array_list world;
@@ -50,6 +52,14 @@ int main(void)
         .s = (sphere){
             .center = {.x = -1, .y = 0, .z = -1},
             .radius = 0.5f,
+            .mat = material_left
+        }
+    });
+    hittable_array_list_add(&world, (hittable) {
+        .type = EHittableType_SPHERE,
+        .s = (sphere){
+            .center = {.x = -1, .y = 0, .z = -1},
+            .radius = -0.4f,
             .mat = material_left
         }
     });

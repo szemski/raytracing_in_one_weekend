@@ -74,6 +74,14 @@ v3f v3f_reflect(v3f v, v3f n)
     return v3f_sub(v, v3f_mul(n, 2.f * v3f_dot(v, n)));
 }
 
+v3f v3f_refract(v3f uv, v3f n, f32 etai_over_etat)
+{
+    f32 cos_theta = fminf(v3f_dot(v3f_opposite(uv), n), 1.f);
+    v3f r_out_perp = v3f_mul(v3f_add(uv, v3f_mul(n, cos_theta)), etai_over_etat);
+    v3f r_out_para = v3f_mul(n, -sqrtf(fabsf(1.0f - v3f_length_squared(r_out_perp))));
+    return v3f_add(r_out_para, r_out_perp);
+}
+
 f32 v3f_length(v3f v)
 {
     return sqrtf(v3f_length_squared(v));

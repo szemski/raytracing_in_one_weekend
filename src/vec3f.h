@@ -41,6 +41,7 @@ v3f v3f_opposite(v3f v);
 v3f v3f_cross(v3f v, v3f u);
 v3f v3f_unit(v3f v);
 v3f v3f_reflect(v3f v, v3f n);
+v3f v3f_refract(v3f uv, v3f n, f32 etai_over_etat);
 
 f32 v3f_length(v3f v);
 f32 v3f_length_squared(v3f v);

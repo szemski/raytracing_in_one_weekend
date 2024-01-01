@@ -9,15 +9,32 @@ typedef struct material material;
 enum EMaterialType
 {
     EMaterialType_LAMBERTIAN,
-    EMaterialType_METAL
+    EMaterialType_METAL,
+    EMaterialType_DIELECTRIC
 };
 
 struct material
 {
     EMaterialType type;
 
-    c3f albedo;
-    f32 fuzz;
+    union
+    {
+        struct lambertian_params
+        {
+            c3f albedo;
+        } lambertian;
+
+        struct metal_params
+        {
+            c3f albedo;
+            f32 fuzz;
+        } metal;
+
+        struct dielectric_params
+        {
+            f32 ir;
+        } dielectric;
+    };
 };
 
 
