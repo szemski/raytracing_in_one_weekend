@@ -25,11 +25,13 @@ int main(void)
     };
     material material_left = {
         .type = EMaterialType_METAL,
-        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.8f}
+        .albedo = {.r = 0.8f, .g = 0.8f, .b = 0.8f},
+        .fuzz = 0.1f
     };
     material material_right = {
         .type = EMaterialType_METAL,
-        .albedo = {.r = 0.8f, .g = 0.6f, .b = 0.2f}
+        .albedo = {.r = 0.8f, .g = 0.6f, .b = 0.2f},
+        .fuzz = .5f
     };
 
     hittable_array_list world;

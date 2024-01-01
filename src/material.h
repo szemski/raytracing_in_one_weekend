@@ -17,6 +17,7 @@ struct material
     EMaterialType type;
 
     c3f albedo;
+    f32 fuzz;
 };
 
 

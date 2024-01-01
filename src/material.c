@@ -20,9 +20,9 @@ bool material_scatter(material* mat, ray* r, hit_record* rec, c3f* attenuation, 
     {
         v3f reflected = v3f_reflect(v3f_unit(r->dir), rec->normal);
         scattered->origin = rec->p;
-        scattered->dir = reflected;
+        scattered->dir = v3f_add(reflected, v3f_mul(v3f_random_unit_vector(), mat->fuzz));
         *attenuation = mat->albedo;
-        return true;
+        return v3f_dot(scattered->dir, rec->normal) > 0.f;
     }
     default: return false;
     }
