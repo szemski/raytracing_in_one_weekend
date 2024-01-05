@@ -85,9 +85,11 @@ int main(void)
         .aspect_ration = 16.f / 9.f,
         .image_width = 800,
         .samples_per_px = 100,
-        .max_depth = 50
+        .max_depth = 50,
+        .mt_render = true
     };
     camera_initialize(&cam);
+
     camera_render(&cam, &world);
 
     save_as_ppm("render.ppm", cam.image_width, cam.image_height, cam.framebuffer);

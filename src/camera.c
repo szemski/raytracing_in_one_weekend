@@ -6,13 +6,33 @@
 #include "hittable.h"
 #include "ray.h"
 
+#define WIN32_LEAN_AND_MEAN
+#include "windows.h"
+#include "process.h"
+#include "synchapi.h"
+
+
 // Utils
+#define MAX_THREADS_COUNT 32
+
+typedef struct camera_render_lines_args
+{
+    camera* cam;
+    hittable_array_list* world;
+    int start_line;
+    int end_line; // excluded
+
+    // statistics
+    int current_line;
+} camera_render_lines_args;
+
 static bool raytest(hittable_array_list* list, ray* r, interval t_interval, hit_record* rec);
 static c3f  ray_color(ray* r, int depth, hittable_array_list* world);
 static c3f  clamp_color(c3f color);
 static ray  get_ray(camera* cam, int i, int j);
 static p3f  pixel_sample_square(camera* cam);
 static c3f  linear_to_gamma(c3f color);
+static void camera_render_lines(void* args);
 
 
 void camera_initialize(camera* cam)
@@ -46,6 +66,15 @@ void camera_initialize(camera* cam)
 
     cam->framebuffer = (c3f*)malloc(cam->image_width * cam->image_height * sizeof(c3f));
     if (!cam->framebuffer) exit(1);
+
+    if (cam->mt_render)
+    {
+        SYSTEM_INFO info;
+        GetSystemInfo(&info);
+        cam->th_count = info.dwNumberOfProcessors < MAX_THREADS_COUNT
+            ? info.dwNumberOfProcessors
+            : MAX_THREADS_COUNT;
+    }
 }
 
 void camera_delete(camera* cam)
@@ -55,21 +84,55 @@ void camera_delete(camera* cam)
 
 void camera_render(camera* cam, hittable_array_list* world)
 {
-    for (int row = 0; row < cam->image_height; ++row)
+    if (cam->mt_render)
     {
-        fprintf_s(stderr, "\rScanline progress... %3d%%", (row * 100) / cam->image_height);
-        for (int col = 0; col < cam->image_width; ++col)
+        int lines_count = cam->image_height / cam->th_count;
+        static camera_render_lines_args args[MAX_THREADS_COUNT];
+        static HANDLE th_handles[MAX_THREADS_COUNT];
+        for (int t = 0; t < cam->th_count; ++t)
         {
-            c3f color = { .r = 0, .g = 0, .b = 0 };
-            for (int sample = 0; sample < cam->samples_per_px; ++sample)
+            args[t] = (camera_render_lines_args){
+                .cam = cam,
+                .world = world,
+                .start_line = t * lines_count,
+                .end_line = (t + 1 == cam->th_count)
+                    ? cam->image_height
+                    : (t + 1) * lines_count,
+                .current_line = t * lines_count
+            };
+
+            th_handles[t] = (HANDLE)_beginthread(camera_render_lines, 0, &args[t]);
+        }
+
+        int running_th_count = cam->th_count;
+        while (running_th_count > 0)
+        {
+            int lines_scanned = 0;
+            for (int t = 0; t < cam->th_count; ++t)
             {
-                ray r = get_ray(cam, col, row);
-                color = v3f_add(color, ray_color(&r, cam->max_depth, world));
+                lines_scanned += (args[t].current_line - args[t].start_line);
+                if (th_handles[t] != NULL && WaitForSingleObject(th_handles[t], 0) != WAIT_TIMEOUT)
+                {
+                    --running_th_count;
+                    th_handles[t] = 0;
+                }
             }
-            cam->framebuffer[row * cam->image_width + col]
-                = clamp_color(linear_to_gamma(v3f_div(color, (f32)cam->samples_per_px)));
+            fprintf_s(stderr, "\rScanline progress... %3d%%", (lines_scanned * 100) / cam->image_height);
+            Sleep(100);
         }
     }
+    else
+    {
+        camera_render_lines_args args = {
+            .cam = cam,
+            .world = world,
+            .start_line = 0,
+            .end_line = cam->image_height
+        };
+
+        camera_render_lines(&args);
+    }
+    
     fprintf_s(stderr, "\rScanline progress... DONE\n");
 }
 
@@ -158,3 +221,28 @@ c3f linear_to_gamma(c3f color)
         .b = sqrtf(color.b)
     };
 }
+
+void camera_render_lines(void* args)
+{
+    struct camera_render_lines_args* rparams = args;
+    for (int row = rparams->start_line; row < rparams->end_line; ++row)
+    {
+        rparams->current_line = row;
+        //fprintf_s(stderr, "\rScanline progress... %3d%%", (row * 100) / rparams->cam->image_height);
+        for (int col = 0; col < rparams->cam->image_width; ++col)
+        {
+            c3f color = { .r = 0, .g = 0, .b = 0 };
+            for (int sample = 0; sample < rparams->cam->samples_per_px; ++sample)
+            {
+                ray r = get_ray(rparams->cam, col, row);
+                color = v3f_add(color, ray_color(&r, rparams->cam->max_depth, rparams->world));
+            }
+            rparams->cam->framebuffer[row * rparams->cam->image_width + col]
+                = clamp_color(linear_to_gamma(v3f_div(color, (f32)rparams->cam->samples_per_px)));
+        }
+    }
+    //fprintf_s(stderr, "\rScanline progress... DONE\n");
+}
+
+#undef WIN32_LEAN_AND_MEAN
+#undef MAX_THREADS_COUNT

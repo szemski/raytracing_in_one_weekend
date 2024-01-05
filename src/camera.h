@@ -17,6 +17,8 @@ struct camera
     v3f pixel00_loc;
     int samples_per_px;
     int max_depth;
+    bool mt_render;
+    int th_count;
     c3f* framebuffer;
 };
 
