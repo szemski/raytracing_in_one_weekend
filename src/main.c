@@ -80,14 +80,18 @@ int main(void)
         }
     });
 
-
     camera cam = {
+        .fov = 20.f,
+        .lookfrom = (p3f){.x = -2.f, .y = 2.f, .z = 1.f},
+        .lookat = (p3f){.x = 0, .y = 0, .z = -1.f},
+        .vup = (v3f){.x = 0, .y = 1.f, .z = 0},
         .aspect_ration = 16.f / 9.f,
         .image_width = 800,
         .samples_per_px = 100,
         .max_depth = 50,
         .mt_render = true
     };
+
     camera_initialize(&cam);
 
     camera_render(&cam, &world);

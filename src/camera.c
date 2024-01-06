@@ -38,14 +38,21 @@ static void camera_render_lines(void* args);
 void camera_initialize(camera* cam)
 {
     cam->image_height = max((int)(cam->image_width / cam->aspect_ration), 1);
-    cam->center = (p3f){ .x = 0, .y = 0, .z = 0 };
+    cam->center = cam->lookfrom;
 
-    const f32 focal_length = 1.f;
-    const f32 viewport_height = 2.f;
+    const f32 focal_length = v3f_length(v3f_sub(cam->lookfrom, cam->lookat));
+    const f32 theta = degrees_to_radians(cam->fov);
+    const f32 h = tanf(theta / 2.f);
+    const f32 viewport_height = 2.f * h * focal_length;
     const f32 viewport_width = viewport_height * ((f32)cam->image_width / cam->image_height);
 
-    const v3f viewport_u = { .x = viewport_width, .y = 0, .z = 0 };
-    const v3f viewport_v = { .x = 0, .y = -viewport_height, .z = 0 };
+    cam->w = v3f_unit(v3f_sub(cam->lookfrom, cam->lookat));
+    cam->u = v3f_unit(v3f_cross(cam->vup, cam->w));
+    cam->v = v3f_cross(cam->w, cam->u);
+
+
+    const v3f viewport_u = v3f_mul(cam->u, viewport_width);
+    const v3f viewport_v = v3f_mul(v3f_opposite(cam->v), viewport_height);
 
     cam->pixel_delta_u = v3f_div(viewport_u, (f32)cam->image_width);
     cam->pixel_delta_v = v3f_div(viewport_v, (f32)cam->image_height);
@@ -54,7 +61,7 @@ void camera_initialize(camera* cam)
         = v3f_sub(
             cam->center,
             v3f_add(
-                (v3f) { .x = 0, .y = 0, .z = focal_length },
+                v3f_mul(cam->w, focal_length),
                 v3f_mul(
                     v3f_add(viewport_u, viewport_v),
                     0.5f)));

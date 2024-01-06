@@ -8,6 +8,13 @@ typedef struct camera camera;
 
 struct camera
 {
+    f32 fov;
+    p3f lookfrom;
+    p3f lookat;
+    v3f vup;
+    v3f u;
+    v3f v;
+    v3f w;
     f32 aspect_ration;
     int image_width;
     int image_height;
