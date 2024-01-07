@@ -2,7 +2,7 @@
 #include "malloc.h"
 #include "process.h"
 
-#define MIN_ARRAY_LIST_SIZE 8
+#define MIN_ARRAY_LIST_SIZE 10
 
 void hittable_array_list_init(hittable_array_list* list)
 {
@@ -27,7 +27,7 @@ void hittable_array_list_add(hittable_array_list* list, hittable item)
 {
     if (list->size >= list->capacity)
     {
-        void* data = realloc(list->data, list->capacity * 2);
+        hittable* data = realloc(list->data, list->capacity * 2 * sizeof(hittable));
         if (!data) exit(1);
         list->data = data;
         list->capacity *= 2;
