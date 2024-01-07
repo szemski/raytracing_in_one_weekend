@@ -88,6 +88,8 @@ int main(void)
         .aspect_ration = 16.f / 9.f,
         .image_width = 800,
         .samples_per_px = 100,
+        .defocus_angle = 10.f,
+        .focus_dist = 3.4f,
         .max_depth = 50,
         .mt_render = true
     };

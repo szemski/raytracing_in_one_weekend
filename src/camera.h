@@ -16,6 +16,10 @@ struct camera
     v3f v;
     v3f w;
     f32 aspect_ration;
+    f32 defocus_angle;
+    v3f defocus_disk_u;
+    v3f defocus_disk_v;
+    f32 focus_dist;
     int image_width;
     int image_height;
     v3f center;

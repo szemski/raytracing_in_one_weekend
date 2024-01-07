@@ -124,6 +124,16 @@ v3f v3f_random_in_unit_sphere()
     }
 }
 
+v3f v3f_random_in_unit_disk()
+{
+    while (true)
+    {
+        v3f v = v3f_rand_range(-1.f, 1.f);
+        v.z = 0.f;
+        if (v3f_length_squared(v) < 1.f) return v;
+    }
+}
+
 v3f v3f_random_unit_vector()
 {
     return v3f_unit(v3f_random_in_unit_sphere());

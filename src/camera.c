@@ -33,6 +33,7 @@ static ray  get_ray(camera* cam, int i, int j);
 static p3f  pixel_sample_square(camera* cam);
 static c3f  linear_to_gamma(c3f color);
 static void camera_render_lines(void* args);
+static p3f  defocus_disk_sample(camera* cam);
 
 
 void camera_initialize(camera* cam)
@@ -40,10 +41,9 @@ void camera_initialize(camera* cam)
     cam->image_height = max((int)(cam->image_width / cam->aspect_ration), 1);
     cam->center = cam->lookfrom;
 
-    const f32 focal_length = v3f_length(v3f_sub(cam->lookfrom, cam->lookat));
     const f32 theta = degrees_to_radians(cam->fov);
     const f32 h = tanf(theta / 2.f);
-    const f32 viewport_height = 2.f * h * focal_length;
+    const f32 viewport_height = 2.f * h * cam->focus_dist;
     const f32 viewport_width = viewport_height * ((f32)cam->image_width / cam->image_height);
 
     cam->w = v3f_unit(v3f_sub(cam->lookfrom, cam->lookat));
@@ -61,7 +61,7 @@ void camera_initialize(camera* cam)
         = v3f_sub(
             cam->center,
             v3f_add(
-                v3f_mul(cam->w, focal_length),
+                v3f_mul(cam->w, cam->focus_dist),
                 v3f_mul(
                     v3f_add(viewport_u, viewport_v),
                     0.5f)));
@@ -70,6 +70,10 @@ void camera_initialize(camera* cam)
         v3f_mul(
             v3f_add(cam->pixel_delta_u, cam->pixel_delta_v),
             0.5f));
+
+    f32 defocus_radius = cam->focus_dist * tanf(degrees_to_radians(cam->defocus_angle / 2));
+    cam->defocus_disk_u = v3f_mul(cam->u, defocus_radius);
+    cam->defocus_disk_v = v3f_mul(cam->v, defocus_radius);
 
     cam->framebuffer = (c3f*)malloc(cam->image_width * cam->image_height * sizeof(c3f));
     if (!cam->framebuffer) exit(1);
@@ -206,8 +210,9 @@ ray get_ray(camera* cam, int col, int row)
             v3f_mul(cam->pixel_delta_u, (f32)col),
             v3f_mul(cam->pixel_delta_v, (f32)row)));
     const v3f pixel_sample = v3f_add(pixel_center, pixel_sample_square(cam));
-    const v3f ray_direction = v3f_sub(pixel_sample, cam->center);
-    return (ray) { .origin = cam->center, .dir = ray_direction };
+    const p3f ray_origin = (cam->defocus_angle <= 0.f) ? cam->center : defocus_disk_sample(cam);
+    const v3f ray_direction = v3f_sub(pixel_sample, ray_origin);
+    return (ray) { .origin = ray_origin, .dir = ray_direction };
 }
 
 p3f pixel_sample_square(camera* cam)
@@ -249,6 +254,16 @@ void camera_render_lines(void* args)
         }
     }
     //fprintf_s(stderr, "\rScanline progress... DONE\n");
+}
+
+p3f defocus_disk_sample(camera* cam)
+{
+    p3f p = v3f_random_in_unit_disk();
+    return v3f_add(
+        cam->center,
+        v3f_add(
+            v3f_mul(cam->defocus_disk_u, p.x),
+            v3f_mul(cam->defocus_disk_v, p.y)));
 }
 
 #undef WIN32_LEAN_AND_MEAN
