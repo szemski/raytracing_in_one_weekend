@@ -4,6 +4,7 @@
 Software renderer implemented in C, following [Ray Tracing in One Weekend](https://raytracing.github.io/) book series.
 
 Example render after finishing first book from the series:
+
 ![alt text](https://github.com/szemski/raytracing_in_one_weekend/blob/main/render.png?raw=true)
 
 ## Build
